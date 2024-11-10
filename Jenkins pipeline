@@ -1,0 +1,88 @@
+pipeline {
+    agent any  // Jenkins will run this pipeline on any available agent.
+
+    environment {
+        DOCKER_HUB_USERNAME = credentials('docker-hub-username')  // Jenkins credentials for Docker Hub username
+        DOCKER_HUB_PASSWORD = credentials('docker-hub-password')  // Jenkins credentials for Docker Hub password
+        AZURE_CREDENTIALS = credentials('azure-credentials')  // Jenkins credentials for Azure service principal
+        IMAGE_NAME = "your-dockerhub-username/your-image-name"
+        AKS_CLUSTER_NAME = "your-aks-cluster-name"
+        RESOURCE_GROUP = "your-aks-resource-group"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                script {
+                    // Checkout the code from Git repository
+                    checkout scm
+                }
+            }
+        }
+
+        stage('Build JAR') {
+            steps {
+                script {
+                    // Run Maven to build the JAR file
+                    sh 'mvn clean package -DskipTests'  // Adjust to your needs
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    // Build the Docker image
+                    sh 'docker build -t $IMAGE_NAME:latest .'
+                }
+            }
+        }
+
+        stage('Push Docker Image to Docker Hub') {
+            steps {
+                script {
+                    // Login to Docker Hub and push the image
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        sh "echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin"
+                        sh "docker push $IMAGE_NAME:latest"
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to AKS') {
+            steps {
+                script {
+                    // Login to Azure
+                    withCredentials([azureServicePrincipal(credentialsId: 'azure-credentials')]) {
+                        sh 'az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID'
+                    }
+
+                    // Configure kubectl to use AKS cluster
+                    sh """
+                        az aks get-credentials --resource-group $RESOURCE_GROUP --name $AKS_CLUSTER_NAME
+                    """
+
+                    // Deploy to AKS
+                    sh """
+                        kubectl apply -f k8s/deployment.yaml  # Kubernetes deployment file path
+                        kubectl set image deployment/your-deployment-name your-container-name=$IMAGE_NAME:latest
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            // Clean up Docker images (optional)
+            sh 'docker rmi $IMAGE_NAME:latest || true'
+        }
+        success {
+            echo "Pipeline successfully completed!"
+        }
+        failure {
+            echo "Pipeline failed. Please check the logs."
+        }
+    }
+}
