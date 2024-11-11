@@ -8,6 +8,7 @@ pipeline {
         IMAGE_NAME = "your-dockerhub-username/your-image-name"
         AKS_CLUSTER_NAME = "your-aks-cluster-name"
         RESOURCE_GROUP = "your-aks-resource-group"
+        SCANNER_HOME=tool 'sonar-scanner'         
     }
 
     stages {
@@ -25,6 +26,17 @@ pipeline {
                 script {
                     // Run Maven to build the JAR file
                     sh 'mvn clean package -DskipTests'  // Adjust to your needs
+                }
+            }
+        }
+
+        stage("Sonarqube Analysis "){
+            steps{
+                withSonarQubeEnv('sonar-server') {
+                    sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=Petclinic \
+                    -Dsonar.java.binaries=. \
+                    -Dsonar.projectKey=Petclinic '''
+    
                 }
             }
         }
@@ -49,6 +61,7 @@ pipeline {
                 }
             }
         }
+
 
         stage('Deploy to AKS') {
             steps {
