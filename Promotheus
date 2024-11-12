@@ -1,0 +1,91 @@
+https://www.coachdevops.com/2022/05/how-to-setup-monitoring-on-kubernetes.html ------ promotheus and grafana
+
+o monitor multiple Kubernetes clusters using a single Prometheus and Grafana setup, you need to set up a multi-cluster monitoring architecture. Here's how you can do it:
+
+### Steps for Setting Up Prometheus and Grafana to Monitor Multiple Clusters:
+
+#### 1. *Set Up Prometheus in One Cluster (Centralized Monitoring)*
+   - *Install Prometheus* on one of your Kubernetes clusters (typically your "central" cluster, but this can be any of the clusters).
+   - You can deploy Prometheus using Helm, or manually with YAML files. If you're using Helm, the command would be:
+     bash
+     helm install prometheus prometheus-community/kube-prometheus-stack
+     
+   - The kube-prometheus-stack includes Prometheus, Grafana, and other monitoring components like Alertmanager.
+   
+#### 2. *Configure Prometheus to Scrape Metrics from Other Clusters*
+   Prometheus can be configured to scrape metrics from other clusters through a few different methods. Two common approaches are:
+
+   ##### Option A: Using Prometheus Federation
+   Federation allows one Prometheus instance to scrape metrics from other Prometheus instances running in different clusters.
+
+   - In the source clusters, ensure that Prometheus is scraping the necessary metrics.
+   - In the central cluster, configure Prometheus to scrape metrics from these remote Prometheus instances using scrape_configs in the prometheus.yml file:
+     yaml
+     scrape_configs:
+       - job_name: 'federated-k8s'
+         honor_labels: true
+         metrics_path: '/federate'
+         scheme: https
+         static_configs:
+           - targets:
+               - 'source-cluster-prometheus-1.example.com:9090'
+               - 'source-cluster-prometheus-2.example.com:9090'
+         relabel_configs:
+           - source_labels: [__param_target]
+             target_label: instance
+           - source_labels: [__param_job]
+             target_label: job
+           - target_label: __metrics_path__
+             replacement: '/federate'
+     
+   - You'll need to set up appropriate RBAC permissions to allow the central Prometheus to access metrics from other clusters.
+
+   ##### Option B: Using Remote Write to Push Metrics to Central Prometheus
+   Another method is for each Prometheus instance in the source clusters to push metrics to a central Prometheus via the remote_write configuration.
+   
+   In each source cluster's Prometheus, add the following to prometheus.yml:
+   yaml
+   remote_write:
+     - url: 'https://central-prometheus.example.com:9090/api/v1/write'
+   
+
+   Ensure that the central Prometheus is accessible from the source clusters, and the RBAC settings allow Prometheus to write data remotely.
+
+#### 3. *Set Up Grafana for Multi-Cluster Dashboards*
+   Once Prometheus is collecting metrics from multiple clusters, you can use Grafana to visualize the data.
+
+   - Install *Grafana* on the central cluster (if it’s not already installed as part of kube-prometheus-stack).
+     If Grafana isn't installed yet, you can use Helm to deploy it:
+     bash
+     helm install grafana grafana/grafana
+     
+   
+   - In *Grafana*, configure multiple data sources to point to the Prometheus instances.
+     - Go to Grafana UI → Configuration → Data Sources.
+     - Add a new Prometheus data source, and configure it to point to your central Prometheus instance (or individual Prometheus instances if using federated setups).
+   
+   - Use Grafana’s *multi-cluster dashboards* to visualize metrics from all your clusters. Grafana has built-in dashboards, or you can create custom ones.
+     - You can use labels or tags (e.g., cluster_name) to differentiate metrics from different clusters.
+
+#### 4. *Secure Communication (Optional but Recommended)*
+   - Set up *TLS encryption* for secure communication between Prometheus instances (especially if you are using remote_write or federation).
+   - Configure *RBAC* permissions to ensure only authorized instances can push or scrape metrics.
+
+#### 5. *Scaling Prometheus*
+   If your clusters are large or you have many clusters, you may need to scale Prometheus to handle the load:
+   - Consider setting up *Prometheus Sharding* where each Prometheus instance handles a subset of clusters.
+   - Alternatively, you can use *Prometheus Thanos* or *Cortex* to manage long-term storage and provide high availability across clusters.
+
+### Example Diagram:
+Here’s an overview of how it might look:
+
+
+[Cluster A] -> [Prometheus A]  --->  [Central Prometheus]
+[Cluster B] -> [Prometheus B]  --->  [Central Prometheus]
+[Cluster C] -> [Prometheus C]  --->  [Central Prometheus]
+
+        [Grafana] <--- [Central Prometheus]
+
+
+### Conclusion
+This setup allows you to aggregate metrics from multiple Kubernetes clusters and visualize them in a single Grafana instance. You can either use Prometheus federation or remote write for integrating multiple Prometheus instances, and Grafana will pull data from these instances to display on dashboards.
