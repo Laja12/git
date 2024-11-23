@@ -175,3 +175,80 @@ SELECT COUNT(DISTINCT department_id) FROM employees;
 
 ### Conclusion:
 These are some of the most common SQL queries for retrieving data from a database. SQL provides a rich set of functionality for querying and manipulating data, including filtering, aggregating, joining tables, and more. You can combine these techniques to build powerful queries for a wide range of data retrieval needs.
+The query you've written:
+
+```sql
+SELECT name 
+FROM Employee 
+WHERE id IN (SELECT managerId 
+             FROM Employee 
+             GROUP BY managerId 
+             HAVING COUNT(managerId) >= 2);
+```
+
+### Explanation:
+- **Outer Query**:  
+  The outer query is selecting the `name` from the `Employee` table where the `id` of the employee is **in** the list of `managerId`s returned by the subquery.
+  
+- **Subquery**:  
+  The subquery retrieves the `managerId` values (which is assumed to be the `id` of the employee who is a manager) from the `Employee` table. It groups the results by `managerId` and filters to only include those managers who have **at least 2 employees** under them (i.e., the `HAVING COUNT(managerId) >= 2` condition).
+
+### How the Query Works:
+1. **Subquery**:  
+   The subquery gets the `managerId` (which represents the employee's ID who is managing others) and groups the records by `managerId`. 
+   - `COUNT(managerId)` counts how many times a particular `managerId` appears, i.e., how many employees report to that manager.
+   - The `HAVING COUNT(managerId) >= 2` condition ensures that only managers with 2 or more employees under them are selected.
+
+2. **Main Query**:  
+   After identifying the `managerId`s with at least two employees under them, the outer query uses the `IN` clause to select the names of employees who have these `managerId`s.
+
+### Example Scenario:
+
+Assuming the `Employee` table looks like this:
+
+| id  | name      | managerId |
+|-----|-----------|-----------|
+| 1   | Alice     | 2         |
+| 2   | Bob       | NULL      |
+| 3   | Charlie   | 2         |
+| 4   | David     | 3         |
+| 5   | Eve       | 3         |
+
+- Alice and Charlie both report to Bob (`managerId = 2`).
+- David and Eve both report to Charlie (`managerId = 3`).
+
+The subquery:
+
+```sql
+SELECT managerId
+FROM Employee
+GROUP BY managerId
+HAVING COUNT(managerId) >= 2;
+```
+
+Would return:
+
+| managerId |
+|-----------|
+| 2         |
+| 3         |
+
+This means that Bob (managerId = 2) and Charlie (managerId = 3) each have at least two employees under them.
+
+Then, the outer query:
+
+```sql
+SELECT name 
+FROM Employee 
+WHERE id IN (2, 3);
+```
+
+Would return:
+
+| name      |
+|-----------|
+| Bob       |
+| Charlie   |
+
+### Summary:
+This query correctly returns the names of the employees who are managers with **at least two employees** under them. The subquery identifies those managers, and the outer query retrieves their names.
