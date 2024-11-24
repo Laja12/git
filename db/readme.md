@@ -72,7 +72,7 @@ SELECT MAX(salary) FROM employees;
 - This will return the maximum salary in the `employees` table.
 
 ### 9. **Group Data Using `GROUP BY`**
-To group data by a specific column, for example, to calculate sums or averages per group:
+groups all the rows with the same column value, for example, to calculate sums or averages per group:
 ```sql
 SELECT department, AVG(salary) FROM employees GROUP BY department;
 ```
