@@ -19,7 +19,7 @@ jobs:
        - run: echo 'first job is ready'
        
   second-job:
-    runs-on: window-latest
+    runs-on: windows-latest
     steps:
       - run: echo 'second job is ready'
       
