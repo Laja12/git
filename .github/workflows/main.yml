@@ -1,0 +1,24 @@
+name: sample workflow
+
+on:
+  push:
+    branches:
+      - 'main'
+  pull_request:
+    types: [opened]
+      -
+  pull_request_review:
+    types: [submitted]
+      
+      
+
+jobs:
+  runs-on: ubuntu-latest
+  steps:
+    - run: echo 'Workflow for the events'
+
+jobs:
+  runs-on: window-latest
+  steps:
+    - run: echo 'Second job to be run'
+  
