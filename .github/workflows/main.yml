@@ -6,7 +6,7 @@ on:
       - 'main'
   pull_request:
     types: [opened]
-      -
+      
   pull_request_review:
     types: [submitted]
       
