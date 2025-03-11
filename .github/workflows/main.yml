@@ -17,6 +17,12 @@ on:
         options:
           - l1
           - l2
+  issues:
+    types:
+      - closed
+      - opened
+  fork:
+  
         
   
         
