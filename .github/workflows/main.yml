@@ -11,6 +11,13 @@ on:
     types: [submitted]
     
   workflow_dispatch:
+    inputs:
+      env:
+        type: choice
+        options:
+          - l1
+          - l2
+        
   
         
       
