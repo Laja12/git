@@ -3,6 +3,8 @@ on:
   push:
   
   workflow_dispatch:
+env:
+  mascot: Mahesh
   
 jobs:
   context_Github:
@@ -15,4 +17,5 @@ jobs:
           echo "SHA Value is ${{github.sha}}"
           echo "Actor Value is ${{github.actor}}"
           echo "Workflow details is ${{github.workflow}}"
+          echo 'Hi ${{ env.mascot }}'
  
