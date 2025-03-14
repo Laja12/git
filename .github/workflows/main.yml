@@ -1,27 +1,27 @@
-name: sample workflow
+# name: sample workflow
 
-on:
-  push:
-    branches:
-      - 'main'
-  pull_request:
-    types: [opened]
+# on:
+#   push:
+#     branches:
+#       - 'main'
+#   pull_request:
+#     types: [opened]
       
-  pull_request_review:
-    types: [submitted]
+#   pull_request_review:
+#     types: [submitted]
     
-  workflow_dispatch:
-    inputs:
-      env:
-        type: choice
-        options:
-          - l1
-          - l2
-  issues:
-    types:
-      - closed
-      - opened
-  fork:
+#   workflow_dispatch:
+#     inputs:
+#       env:
+#         type: choice
+#         options:
+#           - l1
+#           - l2
+#   issues:
+#     types:
+#       - closed
+#       - opened
+#   fork:
   
         
   
@@ -30,16 +30,16 @@ on:
       
       
 
-jobs:
-  first-job:
-    runs-on: ubuntu-latest
-    steps:
-       - run: echo 'first job is ready'
+# jobs:
+#   first-job:
+#     runs-on: ubuntu-latest
+#     steps:
+#        - run: echo 'first job is ready'
        
-  second-job:
-    runs-on: windows-latest
-    steps:
-      - run: echo 'second job is ready'
+#   second-job:
+#     runs-on: windows-latest
+#     steps:
+#       - run: echo 'second job is ready'
       
 
   
